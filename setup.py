@@ -6,5 +6,5 @@ setup(
     license='CIMM.07-013',
     author="Dmitry x2, Zhenya x2, Darya, Polina, Il'nura, Roma, Anya",
     url='https://onlyfans.com/',
-    packages=['conformer'],    
+    packages=['PrirodaOptimizer'],    
     zip_safe=False)
