@@ -1,7 +1,7 @@
 from itertools import islice
 
 
-class Validator():
+class _Validator():
     def __get__(self, obj, objtype=None):
         return getattr(obj, self.name)
 
@@ -9,7 +9,7 @@ class Validator():
         self.name = '_' + name
 
 
-class Atom_Validator(Validator):
+class AtomValidator(_Validator):
     atoms = {'H', 'B', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'Br', 'I'}
 
     def __set__(self, obj, value):
@@ -19,28 +19,24 @@ class Atom_Validator(Validator):
         setattr(obj, self.name, value)
 
 
-class Coords_Validator(Validator):  # проверка на все что угодно: тюплы, флоуты, длина атомов и координат
-    def __init__(self, atoms):
-        self.atoms = atoms
-        # сначала атомы, потом координаты
-
-    def __set__(self, obj, value):
+class CoordsValidator(_Validator):
+    def __set__(self, instance, value):
         if not isinstance(value, tuple):
-            ValueError('Not valid type of value')
+            raise TypeError(f'{value}, не tuple')
         for i in value:
-            if not (len(i)) != 3:
-                raise ValueError
-            for j in i:
-                if not isinstance(j, float):
+
+            if not isinstance(i, tuple):
+                raise TypeError(f'{i}, не tuple')
+            if len(i) != 3:
+                raise ValueError(f'{i}, не 3 значания')
+
+            for temp in i:
+                if not isinstance(temp, float):
                     raise TypeError
-        # if len(getattr(obj)) != len(self.atoms):  # ???
-        #      raise BaseException('Number of atoms is not equals number of coords')
-        # getatt(obj) ??? len(self.atoms) ???
-
-        setattr(obj, self.name, value)
+        setattr(instance, self.name, value)
 
 
-class Charge_Validator(Validator):
+class ChargeValidator(_Validator):
     def __set__(self, obj, value):
         if not isinstance(value, int):
             raise ValueError('Not valid type of charge')
@@ -49,7 +45,7 @@ class Charge_Validator(Validator):
         setattr(obj, self.name, value)
 
 
-class Multiplicity_Validator(Validator):
+class MultiplicityValidator(_Validator):
     def __set__(self, obj, value):
         if not isinstance(value, int):
             raise ValueError('Not valid type of multiplicity')
@@ -59,10 +55,10 @@ class Multiplicity_Validator(Validator):
 
 
 class Conformer:
-    atoms = Atom_Validator()
-    charge = Charge_Validator()
-    multiplicity = Multiplicity_Validator()
-    coords = Coords_Validator('atoms')
+    atoms = AtomValidator()
+    charge = ChargeValidator()
+    multiplicity = MultiplicityValidator()
+    coords = CoordsValidator()
 
     def __init__(self, atoms: list, coords: tuple, charge: int, multiplicity: int):
         self.atoms = atoms

@@ -12,7 +12,7 @@ atom_map = {'H': 1, 'B': 5, 'C': 6, 'N': 7, 'O': 8, 'F': 9, 'Si': 14, 'P': 15, '
 reverse_atom_map= {str(v) : k for k, v in atom_map.items()}
 
 
-class Priroda_Optimizer(BaseEstimator, TransformerMixin):
+class PrirodaOptimizer(BaseEstimator, TransformerMixin):
     def __init__(self, relative=False, basis="L1", memory=200, tmp_dir="/tmp", tmp_ram=10,
                  n_jobs=1, n_process=1, steps=100):
         # будем считать гессиан по умолчанию False
@@ -49,8 +49,8 @@ class Priroda_Optimizer(BaseEstimator, TransformerMixin):
         jobs_1, jobs_2 = tee(self._prepare_calc(x))
         # tee - на вход принимает поток, потом записывает в файл, но в ауте тоже его показывает.
         # Взяли итератор и из него сделали 2 генератора. Если он бесконечный, то он зависнет
+        results = []
         with ThreadPool(self.n_jobs) as p:  # создали н_джобс тредов, число потоков
-            results = []
             for _, (dir, _, log) in zip(p.imap(check_call,
                                      (('mpiexec', '-np', str(self.n_process), 'priroda', inp, out)
                                       for dir, inp, out in jobs_1)), jobs_2):
@@ -65,25 +65,24 @@ class Priroda_Optimizer(BaseEstimator, TransformerMixin):
     def _prepare_input(self, conf: Conformer, tmp_dir):
         # генерирует файл для природы
         # cartesian - Декарт
-        basis = join(dirname(__file__), f'basis{int:self.relative}')
+        basis = join(dirname(__file__), f'basis{int(self.relative)}')
         out = [f'$system memory={self.memory} disk={self.tmp_ram} path={tmp_dir} $end']
-        out.append(f'$control task=optimize+hessian theory=dft four={int(self.relative)}'
+        out.append(f'$control task=optimize+hessian theory=dft four={int(self.relative)} '
                    f'basis={basis} $end')
         out.append('$dft functional=pbe $end')
         out.append(f'$optimize steps={self.steps} $end')
         out.append(f'$molecule charge={conf.charge} mult={conf.multiplicity}')
         out.append(' cartesian')
         out.append(f' set={self.basis}')
-
         for atom, (x, y, z) in zip(conf.atoms, conf.coords):
             out.append(f' {atom_map[atom]} {x:.4f} {y:.4f} {z:.4f}')
-            out.append('$end')
-            return '\n'.join(out)
+        out.append('$end')
+        return '\n'.join(out)
 
     def _prepare_calc(self, confs):  # generator
         for conf in confs:
-            tmp_dir = mkdtemp(dir=self.tmp_dir)  # создали путь до временной директории
-            task = self._prepare_input(conf, tmp_dir)  # создали содержимое файла
+            tmp_dir = mkdtemp(dir=self.tmp_dir)
+            task = self._prepare_input(conf, tmp_dir)
             inp = join(tmp_dir, 'input')
             out = join(tmp_dir, 'output')
             with open(inp, 'w') as f:
@@ -91,7 +90,8 @@ class Priroda_Optimizer(BaseEstimator, TransformerMixin):
             yield tmp_dir, inp, out
 
     def _parse_output(self, log):  # log - open file
-        atoms, coords = [], []
+        atoms = []
+        coords = []
         for line in takewhile(lambda x: x.startswith('MOL>  '),
                               dropwhile(lambda x: not x.startswith('MOL>  '), log)):
             # dropwhile - generator
@@ -102,7 +102,6 @@ class Priroda_Optimizer(BaseEstimator, TransformerMixin):
         next(dropwhile(lambda x: not x.startswith('| Mode'), log))
         next(log)
         hessian = 'i' not in next(log).split()[3]
-        # нужен 4-ый столбец. Если в этом столбце есть буква i, то гессиан False
-        energy = float(next(islice(dropwhile
-                    (lambda x: not x.startswith('T = '), log), 6, 7)).split()[-1])  # попросили с 6 по 7 в генераторе
-        # создать новый объект конформер, и вернуть его 
+        energy = float(next(islice(dropwhile(lambda x: not x.startswith('T = '), log), 6, 7)).split()[-1])
+        # попросили с 6 по 7 в генераторе нужен 4-ый столбец. Если в этом столбце есть буква i, то гессиан False
+        # создать новый объект конформер, и вернуть его
