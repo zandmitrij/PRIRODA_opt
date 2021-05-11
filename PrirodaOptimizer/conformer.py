@@ -32,7 +32,7 @@ class CoordsValidator(_Validator):
         num_atoms = len(getattr(instance, "_atoms"))
         if not isinstance(value, tuple):
             raise TypeError("Not a tuple!")
-        if num_atoms != sum(map(bool, value)):
+        elif num_atoms != sum(map(bool, value)):
             raise ValueError("Number of atoms is not equal to number of coordinates!")
         for i in value:
 
