@@ -3,9 +3,9 @@
 
 import sys
 import argparse
-from PrirodaOptimiser import Conformer, PrirodaOptimizer
-#from PrirodaOptimiser.conformer import Conformer
-#from PrirodaOptimiser.transformer import PrirodaOptimizer
+from PrirodaOptimizer import Conformer, PrirodaOptimizer
+#from PrirodaOptimizer.conformer import Conformer
+#from PrirodaOptimizer.transformer import PrirodaOptimizer
 
 
 def createParser():
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     namespace = parser.parse_args(sys.argv[1:])
 
     p = PrirodaOptimizer()
-    root = './PrirodaOptimiser/data/'
+    root = './PrirodaOptimizer/data/'
 
     if namespace.task.lower() == "input":
         c = Conformer.from_xyz(root + namespace.file)
