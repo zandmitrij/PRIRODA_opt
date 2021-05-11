@@ -29,8 +29,11 @@ class AtomValidator(_Validator):
 
 class CoordsValidator(_Validator):
     def __set__(self, instance, value):
+        num_atoms = len(getattr(instance, "_atoms"))
         if not isinstance(value, tuple):
             raise TypeError("Not a tuple!")
+        if num_atoms != sum(map(bool, value)):
+            raise ValueError("Number of atoms is not equal to number of coordinates!")
         for i in value:
 
             if not isinstance(i, tuple):
