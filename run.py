@@ -3,7 +3,7 @@
 
 import sys
 import argparse
-from PrirodaOptimizer import Conformer, PrirodaOptimizer
+from PrirodaOptimizer import Conformer, PrirodaOptimiser
 #from PrirodaOptimiser.conformer import Conformer
 #from PrirodaOptimiser.transformer import PrirodaOptimizer
 
