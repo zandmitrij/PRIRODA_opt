@@ -1,7 +1,9 @@
 from itertools import islice
+from pathlib import Path
+from typing import Tuple, Union, TextIO
 
 
-class _Validator():
+class _Validator:
     def __get__(self, obj, objtype=None):
         return getattr(obj, self.name)
 
@@ -18,7 +20,7 @@ class AtomValidator(_Validator):
              'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt',
              'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa',
              'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf',
-             'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Uub', 'Uuq'}
+             'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Uub', 'Uuq'}  # вынести в модуль, сделать константой
 
     def __set__(self, obj, value):
         for i in value:
@@ -29,11 +31,8 @@ class AtomValidator(_Validator):
 
 class CoordsValidator(_Validator):
     def __set__(self, instance, value):
-        num_atoms = len(getattr(instance, "_atoms"))
         if not isinstance(value, tuple):
             raise TypeError("Not a tuple!")
-        elif num_atoms != sum(map(bool, value)):
-            raise ValueError("Number of atoms is not equal to number of coordinates!")
         for i in value:
 
             if not isinstance(i, tuple):
@@ -67,7 +66,7 @@ class MultiplicityValidator(_Validator):
 
 class EnergyValidator(_Validator):
     def __set__(self, obj, value):
-        if not isinstance(value, (int, float)):
+        if not isinstance(value, float):
             raise ValueError('Not valid type of energy')
         setattr(obj, self.name, value)
 
@@ -87,8 +86,8 @@ class Conformer:
     energy = EnergyValidator()
     hessian = HessianValidator()
 
-    def __init__(self, atoms: list, coords: tuple, charge: int, multiplicity: int,
-                 hessian: bool, energy: float):
+    def __init__(self, atoms: Tuple[str, ...], coords: Tuple[Tuple[float, float, float], ...],
+                 charge: int, multiplicity: int, hessian: bool = False, energy: float = 0.):
         self.atoms = atoms
         self.coords = coords
         self.charge = charge
@@ -97,34 +96,25 @@ class Conformer:
         self.energy = energy
 
     @classmethod
-    def from_xyz(cls, file, charge=0, multiplicity=1, hessian=True, energy=1):
-        # file - pathlib / путь до файла / открытый файл
-        # parser xyz
-        # itertools islice(generator, n)
-        # line.split() = sfff symbol,x,y,z
-
+    def from_xyz(cls, file: Union[str, Path, TextIO], charge: int = 0, multiplicity: int = 1):
         atoms, coords = [], []
-        file_open = False
         if isinstance(file, str):
-            inp = open(file, 'r')
+            inp = open(file)
+            file_open = True
+        elif isinstance(file, Path):
+            inp = file.open()
             file_open = True
         else:
             inp = file
+            file_open = False
 
-        numAtoms = int(inp.readline().rstrip('\n'))
-        for line in islice(inp, 1, numAtoms + 1):
-            atom, *coord = line.rstrip('\n').split()
+        num_atoms = int(inp.readline().strip())
+        for line in islice(inp, 1, num_atoms + 1):
+            atom, *coord = line.split()
             atoms.append(atom)
             coords.append(tuple(map(float, coord)))
 
         if file_open:
             inp.close()
 
-        return cls(tuple(atoms), tuple(coords), charge, multiplicity, hessian, energy)
-
-
-# with open('../Alanine.xyz', 'r') as input:
-#     test = Conformer.from_xyz(input)
-# print(test.__dict__)
-# print(test.atoms)
-# print(test.coords)
+        return cls(tuple(atoms), tuple(coords), charge, multiplicity)

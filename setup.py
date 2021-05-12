@@ -5,8 +5,9 @@ setup(
     version='0.1.0',
     packages=['PrirodaOptimizer'],
     license='CIMM.07-013',
-    author="Dmitry x2, Zhenya x2, Darya, Polina, Il'nura, Roma, Anya",
+    author="Dmitry x2, Zhenya x2, Daria, Polina, Il'nura, Roma, Anya",
     url='https://cimm.site/',
-    package_data={"PrirodaOptimizer": ['conformer', 'transtormer', 'data/*']},
+    data_files=[('bin', ['bin/pribin', 'bin/priexec'])],
+    package_data={'PrirodaOptimizer': ['basis0', 'basis1']},
     install_requires=['scikit-learn'],
     zip_safe=False)
