@@ -5,6 +5,7 @@ from typing import Tuple, Union, TextIO, Optional
 from CGRtools import XYZRead
 # import rdkit
 
+
 class _Validator:
     def __get__(self, obj, objtype=None):
         return getattr(obj, self.name)
@@ -114,7 +115,6 @@ class Conformer:
 
         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
 
-
     @classmethod
     def from_rdkit(cls, mol, multiplicity: int = 1, conformer: int = 0):
 
@@ -148,7 +148,7 @@ class Conformer:
         else:
             out = file
             file_open = False
-
+            
         atoms = self.atoms
         coords = self.coords
         out.write(f'{len(atoms)}\n\n')
@@ -178,3 +178,4 @@ class Conformer:
             radical = multiplicity
 
         return parser(matrix, charge, radical)
+      
