@@ -164,18 +164,20 @@ class Conformer:
         # вызывает метод create_parser класса XYZRead. Создается функция, которая записывается в переменную parser
         matrix = []
         for a, c in zip(self.atoms, self.coords):
-            atom_num = atom_map[a]
-            x, y, z = c
-            matrix.append((atom_num, x, y, z))
+            matrix.append((a, *c))
         charge = self.charge
-        if multiplicity is None:
-            multiplicity = self.multiplicity
-        if multiplicity == 1:
+
+        if self.multiplicity == 1:
             radical = 0
-        elif multiplicity == 2:
+        elif self.multiplicity == 2:
             radical = 1
+        elif multiplicity is None:
+            raise ValueError
         else:
             radical = multiplicity
 
         return parser(matrix, charge, radical)
+
+
+
       
