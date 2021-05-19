@@ -143,3 +143,24 @@ class Conformer:
 
             
         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
+    
+    def to_xyz(self, file: Union[str, Path, TextIO]):
+        if isinstance(file, str):
+            out = open(file, 'w')
+            file_open = True
+        elif isinstance(file, Path):
+            out = file.open()
+            file_open = True
+        else:
+            out = file
+            file_open = False
+            
+        atoms = self.atoms
+        coords = self.coords
+        out.write(f'{len(atoms)}\n\n')
+
+        for atom, (x, y, z) in zip(atoms, coords):
+            out.write(f'{atom} {x} {y} {z}\n')
+
+        if file_open:
+            out.close()
