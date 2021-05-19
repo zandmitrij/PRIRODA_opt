@@ -1,9 +1,9 @@
 from itertools import islice
+from .atom_map import atoms, atom_map, reverse_atom_map
 from pathlib import Path
-from typing import Tuple, Union, TextIO
-
-import rdkit
-
+from typing import Tuple, Union, TextIO, Optional
+from CGRtools import XYZRead
+# import rdkit
 
 
 class _Validator:
@@ -15,15 +15,8 @@ class _Validator:
 
 
 class AtomValidator(_Validator):
-    atoms = {'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al',
-             'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
-             'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y',
-             'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te',
-             'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb',
-             'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt',
-             'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa',
-             'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf',
-             'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Uub', 'Uuq'}  # вынести в модуль, сделать константой
+    def __init__(self):
+        self.atoms = atoms
 
     def __set__(self, obj, value):
         for i in value:
@@ -121,28 +114,30 @@ class Conformer:
             inp.close()
 
         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
-    
+
     @classmethod
     def from_rdkit(cls, mol, multiplicity: int = 1, conformer: int = 0):
-#         atoms: Iterator[atom] = mol.GetAtoms()
-#         atom_num: int = atom.GetAtomicNum()
-#         atom_charge: int = atom.GetFormalCharge()
-#         conformers: Tuple[conformer, ...] = mol.GetConformers()
-#         xyz: Iterable[Iterable[float]] = conformers[conformer].GetPositions()
- 
-        atoms = []
-        charge = 0
 
+        # atoms: Iterator[atom] = mol.GetAtoms()
+        # atom_num: int = atom.GetAtomicNum()
+        # atom_charge: int = atom.GetFormalCharge()
+        # conformers: Tuple[conformer, ...] = mol.GetConformers()
+        # xyz: Iterable[Iterable[float]] = conformers[conformer].GetPositions()
+
+        atoms, coords = [], []
+        charge = 0
         for i in mol.GetAtoms():
             atoms.append(i.GetSymbol())
-            charge += i.GetFormalCharge()
-        
-        coords = []
-        conformers = mol.GetConformers()
-        coords = tuple(list(map(lambda x: tuple(x), conformers[conformer].GetPositions())))     
+            charge += i.GetFormalCharge()  # заряд считается как сумма всех зарядов
 
-        return cls(tuple(atoms), tuple(coords), charge, multiplicity)
-    
+        conformers = mol.GetConformers()
+        coords = tuple(map(lambda x: tuple(x), conformers[conformer].GetPositions()))
+        # берем конфермер по айди, по позиции он вытаскивает координаты всех атомов.
+        # Получаем массив, преобразовываем в tuple
+        # map принимает lambda функцию ко всем координатам всех атомов
+
+        return cls(tuple(atoms), coords, charge, multiplicity)
+
     def to_xyz(self, file: Union[str, Path, TextIO]):
         if isinstance(file, str):
             out = open(file, 'w')
@@ -163,3 +158,24 @@ class Conformer:
 
         if file_open:
             out.close()
+
+    def to_cgrtools(self, radius_multiplier=1.25, store_log=False, multiplicity: Optional[int] = None):
+        parser = XYZRead.create_parser(radius_multiplier=radius_multiplier, store_log=store_log)
+        # вызывает метод create_parser класса XYZRead. Создается функция, которая записывается в переменную parser
+        matrix = []
+        for a, c in zip(self.atoms, self.coords):
+            atom_num = atom_map[a]
+            x, y, z = c
+            matrix.append((atom_num, x, y, z))
+        charge = self.charge
+        if multiplicity is None:
+            multiplicity = self.multiplicity
+        if multiplicity == 1:
+            radical = 0
+        elif multiplicity == 2:
+            radical = 1
+        else:
+            radical = multiplicity
+
+        return parser(matrix, charge, radical)
+      
