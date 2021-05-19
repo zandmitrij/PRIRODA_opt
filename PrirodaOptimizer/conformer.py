@@ -2,6 +2,9 @@ from itertools import islice
 from pathlib import Path
 from typing import Tuple, Union, TextIO
 
+import rdkit
+
+
 
 class _Validator:
     def __get__(self, obj, objtype=None):
@@ -118,3 +121,25 @@ class Conformer:
             inp.close()
 
         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
+    
+#     @classmethod
+#     def from_rdkit(cls, mol, multiplicity: int = 1, conformer: int = 0):
+# #         atoms: Iterator[atom] = mol.GetAtoms()
+# #         atom_num: int = atom.GetAtomicNum()
+# #         atom_charge: int = atom.GetFormalCharge()
+# #         conformers: Tuple[conformer, ...] = mol.GetConformers()
+# #         xyz: Iterable[Iterable[float]] = conformers[conformer].GetPositions()
+ 
+#         atoms = []
+#         charge = 0
+
+#         for i in mol.GetAtoms():
+#             atoms.append(i.GetAtomicNum())
+#             charge += i.GetFormalCharge()
+        
+#         coords = []
+#         conformers = mol.GetConformers()
+#         coords.append(conformers[conformer].GetPositions())        
+
+            
+#         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
