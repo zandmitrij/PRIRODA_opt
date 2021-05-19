@@ -9,5 +9,5 @@ setup(
     url='https://cimm.site/',
     data_files=[('bin', ['bin/pribin', 'bin/priexec'])],
     package_data={'PrirodaOptimizer': ['basis0', 'basis1']},
-    install_requires=['scikit-learn'],
+    install_requires=['scikit-learn', 'CGRtools'],
     zip_safe=False)
