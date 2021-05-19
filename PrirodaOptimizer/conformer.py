@@ -139,7 +139,7 @@ class Conformer:
         
         coords = []
         conformers = mol.GetConformers()
-        coords.append(conformers[conformer].GetPositions())        
+        coords = tuple(list(map(lambda x: tuple(x), conformers[conformer].GetPositions())))     
 
             
         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
