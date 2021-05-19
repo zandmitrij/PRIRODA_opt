@@ -124,11 +124,11 @@ class Conformer:
     
     @classmethod
     def from_rdkit(cls, mol, multiplicity: int = 1, conformer: int = 0):
-        atoms: Iterator[atom] = mol.GetAtoms()
-        atom_num: int = atom.GetAtomicNum()
-        atom_charge: int = atom.GetFormalCharge()
-        conformers: Tuple[conformer, ...] = mol.GetConformers()
-        xyz: Iterable[Iterable[float]] = conformers[conformer].GetPositions()
+#         atoms: Iterator[atom] = mol.GetAtoms()
+#         atom_num: int = atom.GetAtomicNum()
+#         atom_charge: int = atom.GetFormalCharge()
+#         conformers: Tuple[conformer, ...] = mol.GetConformers()
+#         xyz: Iterable[Iterable[float]] = conformers[conformer].GetPositions()
  
         atoms = []
         charge = 0
@@ -141,7 +141,6 @@ class Conformer:
         conformers = mol.GetConformers()
         coords = tuple(list(map(lambda x: tuple(x), conformers[conformer].GetPositions())))     
 
-            
         return cls(tuple(atoms), tuple(coords), charge, multiplicity)
     
     def to_xyz(self, file: Union[str, Path, TextIO]):
